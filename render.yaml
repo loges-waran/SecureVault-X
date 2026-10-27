@@ -2,19 +2,14 @@
 # https://render.com/docs/blueprint-spec
 
 services:
-  # Unified Web Service (FastAPI + Embedded Production React Frontend)
+  # Containerized Production Web Service (FastAPI + Embedded React Frontend)
   - type: web
     name: securevault-x
-    runtime: python
-    buildCommand: "cd frontend && npm install && npm run build && cd .. && pip install -r backend/requirements.txt"
-    startCommand: "uvicorn backend.app.main:app --host 0.0.0.0 --port $PORT"
+    runtime: docker
+    dockerfilePath: Dockerfile
     plan: free
     region: oregon
     envVars:
-      - key: PYTHON_VERSION
-        value: 3.11.9
-      - key: NODE_VERSION
-        value: 20.12.0
       - key: MAX_FILE_SIZE_BYTES
         value: 52428800
       - key: ALLOWED_ORIGINS
