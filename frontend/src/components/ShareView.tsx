@@ -153,6 +153,28 @@ export const ShareView: React.FC = () => {
     }
   };
 
+  const handleDownloadEncryptedOnly = async () => {
+    if (!fetchedShareInfo) return;
+    setIsDownloading(true);
+    setAccessError(null);
+    try {
+      const dlRes = await downloadSharedFileApi(fetchedShareInfo.share_id);
+      const url = URL.createObjectURL(dlRes.blob);
+      const a = document.createElement('a');
+      a.href = url;
+      a.download = dlRes.filename;
+      a.click();
+      setTimeout(() => URL.revokeObjectURL(url), 1000);
+      setFetchedShareInfo((prev) =>
+        prev ? { ...prev, downloads_remaining: dlRes.downloadsRemaining } : null
+      );
+    } catch (err: any) {
+      setAccessError(err.response?.data?.detail || 'Failed to download encrypted container.');
+    } finally {
+      setIsDownloading(false);
+    }
+  };
+
   const copyShareLink = (shareId: string) => {
     const url = `${window.location.origin}/#share=${shareId}`;
     navigator.clipboard.writeText(url);
@@ -467,24 +489,36 @@ export const ShareView: React.FC = () => {
                     </div>
                   </div>
 
-                  <button
-                    type="button"
-                    onClick={handleDownloadAndDecrypt}
-                    disabled={isDownloading || !downloadPassword}
-                    className="w-full py-3 px-4 rounded-lg bg-emerald-500 hover:bg-emerald-400 text-black font-mono text-xs font-bold uppercase tracking-wider flex items-center justify-center gap-2 transition-colors shadow-[0_0_20px_rgba(16,185,129,0.35)]"
-                  >
-                    {isDownloading ? (
-                      <>
-                        <div className="w-4 h-4 border-2 border-black border-t-transparent rounded-full animate-spin" />
-                        Fetching & Decrypting Drop...
-                      </>
-                    ) : (
-                      <>
-                        <Download className="w-4 h-4" />
-                        Download & Authenticate Drop
-                      </>
-                    )}
-                  </button>
+                  <div className="flex flex-col sm:flex-row gap-2">
+                    <button
+                      type="button"
+                      onClick={handleDownloadAndDecrypt}
+                      disabled={isDownloading || !downloadPassword}
+                      className="flex-1 py-3 px-4 rounded-lg bg-emerald-500 hover:bg-emerald-400 text-black font-mono text-xs font-bold uppercase tracking-wider flex items-center justify-center gap-2 transition-colors shadow-[0_0_20px_rgba(16,185,129,0.35)]"
+                    >
+                      {isDownloading ? (
+                        <>
+                          <div className="w-4 h-4 border-2 border-black border-t-transparent rounded-full animate-spin" />
+                          Fetching & Decrypting Drop...
+                        </>
+                      ) : (
+                        <>
+                          <Download className="w-4 h-4" />
+                          Download & Authenticate Drop
+                        </>
+                      )}
+                    </button>
+                    <button
+                      type="button"
+                      onClick={handleDownloadEncryptedOnly}
+                      disabled={isDownloading}
+                      className="py-3 px-4 rounded-lg bg-slate-800 hover:bg-slate-700 text-slate-300 border border-cyber-border font-mono text-xs font-bold uppercase tracking-wider flex items-center justify-center gap-2 transition-colors"
+                      title="Download raw encrypted .svx file to decrypt offline"
+                    >
+                      <Download className="w-4 h-4 text-cyan-400" />
+                      Save .svx Only
+                    </button>
+                  </div>
                 </div>
               )}
             </div>
